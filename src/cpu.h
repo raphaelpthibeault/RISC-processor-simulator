@@ -1,5 +1,11 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef CPU_H
+#define CPU_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <math.h>
 
 /*
 Instruction format:
@@ -26,5 +32,34 @@ opcode| Ri | Rj | _ | K
 
 #define BYTE unsigned char
 
+typedef union {
+    struct {
+        unsigned op : 6;
+        unsigned ri: 4;
+        unsigned rj: 4;
+        unsigned rk: 4;
+    } format_a;
+    struct {
+        unsigned op : 6;
+        unsigned ri: 4;
+        unsigned : 2;
+        unsigned k: 16;
+    } format_b;
+    BYTE bytes[4];
+    long data;
+} word_type;
 
-#endif
+/* MEMORY */
+void init_mem();
+char fetch();
+long get_mem_word(long);
+void put_mem_word(long, long);
+BYTE get_mem_byte(long);
+void put_mem_byte(long, BYTE);
+void put_mem_instr(long, word_type, char);
+void put_mem_char(long, short, char);
+
+
+
+
+#endif // CPU_H
