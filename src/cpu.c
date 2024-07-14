@@ -254,6 +254,126 @@ long registers[MAX_REG];
       registers[reg_num] = data;
   }
 
+/************************************************ INSTRUCTIONS SECTION **************************************************/
+/* 0 is an illegal instruction */
+enum op_type {
+    illegal, lw, lb, sw, sb, add, sub, mul, newdiv, mod, and, or , not, ceq, cne, clt, cle, cgt, cge,
+    addi, subi, muli, divi, modi, andi, ori, ceqi, cnei, clti, clei, cgti, cgei, sl, sr, gtc, ptc,
+    bz, bnz, j, jr, jl, jlr, nop, hlt, entry, align, org, dw, db, res, last
+};
+
+char op_names[last][6] = {
+	"", "lw", "lb", "sw", "sb", "add", "sub", "mul", "div", "mod",	"and", "or", "not", "ceq", "cne", "clt", "cle", "cgt", "cge",
+	"addi", "subi", "muli", "divi", "modi", "andi", "ori", "ceqi", "cnei", "clti", "clei", "cgti", "cgei", "sl", "sr", "getc", "putc",
+	"bz", "bnz", "j", "jr", "jl", "jlr", "nop", "hlt", "entry", "align", "org", "dw", "db", "res"
+};
+
+void
+show_format_a(long addr, word_type word) {
+    char *op_code = op_names[word.format_a.op];
+    switch (word.format_a.op) {
+        /* operands Ri, Rj, Rk */
+        case add:
+    	case sub:
+    	case mul:
+    	case newdiv:
+    	case mod:
+    	case and:
+    	case or:
+    	case ceq:
+    	case cne:
+    	case clt:
+    	case cle:
+    	case cgt:
+    	case cge:
+      		printf("%5ld %-6s   r%d, r%d, r%d",
+    			addr, op_code, word.format_a.ri,
+    			word.format_a.rj, word.format_a.rk);
+    		break;
+
+        /* Operands Ri, Rj */
+    	case not:
+    	case jlr:
+    		printf("%5ld %-6s   r%d, r%d",
+    			addr, op_code, word.format_a.ri, word.format_a.rj);
+    		break;
+
+  		/* No operands */
+    	case nop:
+    	case hlt:
+    		printf("%5ld %-6s",
+    			addr, op_code);
+    		break;
+    }
+}
+
+void
+show_format_b(long addr, word_type word) {
+    char *op_code = op_names[word.format_b.op];
+    switch (word.format_b.op) {
+        /* Operands Ri, K(Rj) */
+        case lw:
+        case lb:
+            printf("%5ld %-6s   r%d, %d(r%d)",
+    			addr, op_code, word.format_b.ri,
+    			word.format_b.k, word.format_b.rj);
+    		break;
+
+        /* Operands K(Rj), Ri */
+        case sw:
+        case sb:
+            printf("%5ld %-6s   %d(r%d), r%d",
+    			addr, op_code, word.format_b.k,
+    			word.format_b.rj, word.format_b.ri);
+    		break;
+
+        /* Operands Ri, Rj, K */
+        case addi:
+    	case subi:
+    	case muli:
+    	case divi:
+    	case modi:
+    	case andi:
+    	case ori:
+    	case ceqi:
+    	case cnei:
+    	case clti:
+    	case clei:
+    	case cgti:
+    	case cgei:
+    		printf("%5ld %-6s   r%d, r%d, %d",
+    			addr, op_code, word.format_b.ri,
+    			word.format_b.rj, word.format_b.k);
+    		break;
+
+        /* Operands Ri, K */
+     	case sl:
+    	case sr:
+    	case bz:
+    	case bnz:
+    	case jl:
+    		printf("%5ld %-6s   r%d, %d",
+    			addr, op_code, word.format_b.ri, word.format_b.k);
+    		break;
+
+        /* Operands Ri */
+     	case gtc:
+    	case ptc:
+    	case jr:
+    		printf("%5ld %-6s   r%d",
+    			addr, op_code, word.format_b.ri);
+    		break;
+
+        /* Operands K */
+       	case j:
+    	printf("%5ld %-6s   %d",
+    		addr, op_code, word.format_b.k);
+    	break;
+	}
+}
+
+/************************************************ SYMTAB SECTION **************************************************/
+
 /************************************************ PARSING SECTION **************************************************/
 
 
