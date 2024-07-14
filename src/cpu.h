@@ -52,14 +52,12 @@ typedef union {
 /* MEMORY */
 void init_mem();
 char fetch();
-long get_mem_word(long);
-void put_mem_word(long, long);
-BYTE get_mem_byte(long);
-void put_mem_byte(long, BYTE);
-void put_mem_instr(long, word_type, char);
-void put_mem_char(long, short, char);
-
-
+long fetch_mem_word(long);
+void store_mem_word(long, long);
+BYTE fetch_mem_byte(long);
+void store_mem_byte(long, BYTE);
+void store_mem_instr(long, word_type, char);
+void store_mem_char(long, short, char);
 
 
 #endif // CPU_H

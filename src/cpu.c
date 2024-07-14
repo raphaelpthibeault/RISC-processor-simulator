@@ -105,7 +105,7 @@ fetch() {
  * Return data if success.
  */
 long
-get_mem_word(long addr) {
+fetch_mem_word(long addr) {
     if (out_of_range(addr) || misaligned(addr)) {
         return 0;
     }
@@ -127,7 +127,7 @@ get_mem_word(long addr) {
  * Exits out early if error.
  */
  void
- put_mem_word(long addr, long data) {
+ store_mem_word(long addr, long data) {
      if (out_of_range(addr) || misaligned(addr)) {
          return;
      }
@@ -152,7 +152,7 @@ get_mem_word(long addr) {
   * Return a BYTE if success.
   */
 BYTE
-get_mem_byte(long addr) {
+fetch_mem_byte(long addr) {
     if (out_of_range(addr)) {
         return 0;
     }
@@ -175,7 +175,7 @@ get_mem_byte(long addr) {
  * Exit out early if error.
  */
 void
-put_mem_byte(long addr, BYTE byte) {
+store_mem_byte(long addr, BYTE byte) {
     if (out_of_range(addr)) {
         return;
     }
@@ -197,7 +197,7 @@ put_mem_byte(long addr, BYTE byte) {
  * Exit out early if error.
  */
 void
-put_mem_instr(long addr, word_type word, char content) {
+store_mem_instr(long addr, word_type word, char content) {
     if (addr & 0b11) {
         char *err = &"Address alignment error @ " [addr];
         runtime_error(err); // TODO: syntax error?
@@ -212,7 +212,7 @@ put_mem_instr(long addr, word_type word, char content) {
 /* Put character in memory.Should only be used by the assembler
  */
 void
-put_mem_char(long addr, short byte, char content) {
+store_mem_char(long addr, short byte, char content) {
     long word_addr = addr >> 2;
     short offset = addr & 0b11;
 
@@ -220,7 +220,41 @@ put_mem_char(long addr, short byte, char content) {
     memory[word_addr].content = content;
 }
 
-/************************************************ Parsing SECTION **************************************************/
+/************************************************ REGISTERS SECTION **************************************************/
+/*
+16 registers, R0, ... R15. R0 = 0. Each register is a 32-bit word.
+*/
+
+long registers[MAX_REG];
+
+/* Fetch the value of a register.
+ * Return 0 if error.
+ * Return value if success.
+ */
+ long
+ fetch_reg(unsigned short reg_num) {
+     if (reg_num < 0 || reg_num > 15) {
+         char *err = &"Simulator error: illegal register code = " [reg_num];
+         runtime_error(err);
+         return 0;
+     }
+     return registers[reg_num];
+ }
+
+ /* Put a value in a register.
+  * Exit out early if error.
+  */
+  void
+  store_reg(unsigned short reg_num, long data) {
+      if (reg_num < 0 || reg_num > 15) {
+          char *err = &"Simulator error: illegal register code = " [reg_num];
+          runtime_error(err);
+          return;
+      }
+      registers[reg_num] = data;
+  }
+
+/************************************************ PARSING SECTION **************************************************/
 
 
 /************************************************ EXECUTION SECTION **************************************************/
