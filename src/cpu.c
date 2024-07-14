@@ -268,6 +268,8 @@ char op_names[last][6] = {
 	"bz", "bnz", "j", "jr", "jl", "jlr", "nop", "hlt", "entry", "align", "org", "dw", "db", "res"
 };
 
+/* Display an address if its instruction is in format a
+ */
 void
 show_format_a(long addr, word_type word) {
     char *op_code = op_names[word.format_a.op];
@@ -307,6 +309,8 @@ show_format_a(long addr, word_type word) {
     }
 }
 
+/* Display an address if its instruction is in format b
+ */
 void
 show_format_b(long addr, word_type word) {
     char *op_code = op_names[word.format_b.op];
@@ -371,6 +375,56 @@ show_format_b(long addr, word_type word) {
     	break;
 	}
 }
+
+/* Convert a word to a string of 4 chars.
+ * The output depends the endianness of the host.
+ * Returns the word in the buffer.
+ */
+char *
+word_to_chars(char *buf, word_type word) {
+    int i;
+    for (i = 0; i < 4; ++i) {
+        char c = word.bytes[i];
+        if (32 <= c && c <= 126) {
+            buf[i] = c;
+        } else {
+            buf[i] = '.';
+        }
+    }
+    buf[4] = '\0';
+    return buf;
+}
+
+/* Display 1 word of memory.
+ * Exits the program if eror.
+ */
+void
+show_word(long addr) {
+    if (addr & 0b11) {
+        char *err = &"Internal error: invalid address " [addr];
+        exit(1);
+    }
+
+    char char_buf[5];
+    long word_addr = addr >> 2;
+    word_type word = memory[word_addr].word;
+    switch (memory[word_addr].content) {
+        case 'a':
+            show_format_a(addr, word);
+            break;
+        case 'b':
+            show_format_b(addr, word);
+            break;
+        case 'd':
+            printf("%5ld  %08lX  %s  %4ld", addr, word.data,
+			word_to_chars(char_buf, word), word.data);
+    		break;
+        case 'u':
+            printf("%5ld  ??", addr);
+    		break;
+    }
+}
+
 
 /************************************************ SYMTAB SECTION **************************************************/
 
