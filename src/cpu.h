@@ -42,6 +42,7 @@ typedef union {
     struct {
         unsigned op : 6;
         unsigned ri: 4;
+        unsigned rj: 4;
         unsigned : 2;
         unsigned k: 16;
     } format_b;
