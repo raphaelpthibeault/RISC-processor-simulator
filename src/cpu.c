@@ -1,4 +1,5 @@
 #include <cpu.h>
+#include <stdio.h>
 
 void runtime_error(char*);
 
@@ -425,10 +426,113 @@ show_word(long addr) {
     }
 }
 
+/************************************************ LEXING & PARSING SECTION **************************************************/
+
+enum token_type {
+    T_ILLEGAL, T_REG, T_OP, T_SYM, T_NUM, T_STR, T_COMMA, T_LP, T_RP, T_NULL
+};
+
+struct {
+    char sym_val[TOK_LEN];          /* characters of the token */
+    enum token_type kind;           /* kind of the token */
+    char *pos;                      /* pointer to start of token */
+    short reg;                      /* register number for T_REG */
+    short op;                       /* op code for T_OP */
+    long int_val;                   /* value for T_NUM */
+} token;
+
+char old_val[TOK_LEN];
+char *err_msg;                      /* error message */
+int error_count = 0;                /* number of errors detected */
+char *bp;                           /* buffer pointer */
+
+/* Record an error message for later use. Only the first error is recorded.
+ */
+void
+syntax_error(char *msg) {
+    ++error_count;
+    if (!strcmp(err_msg, "")) {
+      	strcpy(err_msg, "Error at `");
+		strcat(err_msg, old_val);
+		strcat(err_msg, " ");
+		strcat(err_msg, token.sym_val);
+		strcat(err_msg, "': ");
+		strcat(err_msg, msg);
+    }
+}
+
+/* is char a valid symbol
+ */
+short
+is_sym_char(char c) {
+    return isalnum(c) || c == '_';
+}
+
+/* is string a valid register; p should be a pointer to the beginning of the string
+ */
+short
+is_reg_str(char *p) {
+    long reg_num = 0;
+    if (!(*p == 'R' || *p == 'r')) {
+        return FALSE;
+    }
+    ++p;
+    while (*p) {
+        if (isdigit(*p)) {
+            reg_num = 10 * reg_num + *p - '0';
+        } else {
+            return FALSE;
+        }
+        ++p;
+    }
+
+    if (reg_num >= MAX_REG) {
+        char *err = &"Illegal register: R" [reg_num];
+        syntax_error(err);
+        return FALSE;
+    }
+
+    token.reg = (short)reg_num;
+    return TRUE;
+}
+
+/* The classic lexer next() function, with the result being stored in the token struct
+ */
+void
+next() {
+
+}
+
+/* Match the token type
+ */
+void
+match(enum token_type kind) {
+
+}
+
+/* Parse an opcode
+ */
+short
+get_op() {
+    return 0;
+}
+
+/* read a line of source code (assembly) from the buffer
+*/
+void
+read_line() {
+
+}
+
+/* load a source file
+ */
+void
+load(FILE* f_in, FILE* f_out, short listing) {
+
+}
 
 /************************************************ SYMTAB SECTION **************************************************/
 
-/************************************************ PARSING SECTION **************************************************/
 
 
 /************************************************ EXECUTION SECTION **************************************************/
