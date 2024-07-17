@@ -1,5 +1,6 @@
 #include <cpu.h>
-#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
 void runtime_error(char*);
 
@@ -500,7 +501,86 @@ is_reg_str(char *p) {
  */
 void
 next() {
+    char *t = token.sym_val;
+    short op;
+    strcpy(old_val, token.sym_val);
 
+    while (*bp == ' ' || *bp == '\t')
+        ++bp;
+    token.pos = bp;
+
+    if (isalpha(*bp)) {
+        /* it's a reg, op code, directive or symbol */
+        while (is_sym_char(*bp))
+            *t++ = *bp++;
+        *t = '\0';
+
+        if (is_reg_str(token.sym_val)) {
+            token.kind = T_REG;
+            return;
+        }
+
+        for (op = lw; op < last; ++op) {
+            if (!strcmp(token.sym_val, op_names[op])) {
+                token.op = op;
+                token.kind = T_OP;
+                return;
+            }
+        }
+
+        token.kind = T_SYM;
+        return;
+    } else if (*bp == '-' || *bp == '+' || isdigit(*bp)) {
+        /* signed decimal integer */
+        *t++ = *bp++;
+        while (isdigit(*bp))
+            *t++ = *bp++;
+        *t = '\0';
+        sscanf(token.sym_val, "%ld", &token.int_val);
+		token.kind = T_NUM;
+		return;
+    } else if (*bp == '"') {
+        /* string in enclosing quotes */
+        ++bp;
+        while (1) {
+            if (*bp == '"') {
+                *t = '\0';
+                token.kind = T_STR;
+                ++bp;
+                break;
+            }
+            if (*bp == '\0' || *bp == '\n') {
+                syntax_error("Unterminated string.");
+                token.kind = T_ILLEGAL;
+                *t = '\0';
+                break;
+            }
+            *t++ = *bp++;
+        }
+        return;
+    } else if (*bp == ',') {
+        ++bp;
+        token.kind = T_COMMA;
+        strcpy(token.sym_val, ",");
+        return;
+    } else if (*bp == '(') {
+        ++bp;
+        token.kind = T_LP;
+        strcpy(token.sym_val, "(");
+        return;
+    } else if (*bp == ')') {
+        ++bp;
+        token.kind = T_RP;
+        strcpy(token.sym_val, ")");
+        return;
+    } else if (*bp == '%' || *bp == '\n' || *bp == '\0') {
+        token.kind = T_NULL;
+        strcpy(token.sym_val, " ");
+        return;
+    } else {
+        token.kind = T_ILLEGAL;
+        strcpy(token.sym_val, " ");
+    }
 }
 
 /* Match the token type
