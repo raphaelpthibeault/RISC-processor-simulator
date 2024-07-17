@@ -1,6 +1,4 @@
 #include <cpu.h>
-#include <ctype.h>
-#include <string.h>
 
 void runtime_error(char*);
 
@@ -427,6 +425,158 @@ show_word(long addr) {
     }
 }
 
+/************************************************ SYMTAB SECTION **************************************************/
+
+struct use_node {
+  long addr;
+  struct use_node *next;
+};
+
+struct sym_node {
+  char *name;
+  long val;
+  short defs;
+  struct use_node *uses;
+  struct sym_node *next;
+};
+
+struct sym_node *symbols = NULL;    /* ptr to base of symbol table */
+
+/* Return a pointer to a symbol entry.
+ * It always succeeds, because it creates a new entry if it can't find a matching entry.
+ */
+struct sym_node *
+find_symbol(char *name) {
+    struct sym_node *p = symbols;
+    while (p) {
+  		if (!strcmp(name, p->name))
+	    	return p;
+		p = p->next;
+    }
+    /* no entry exists, so create one */
+    p = (struct sym_node *)malloc(sizeof(struct sym_node));
+    if (p == NULL) {
+        printf("Out of memory.\n");
+        exit(1);
+    }
+   	p->name = (char *)malloc(strlen(name) + 1);
+	strcpy(p->name, name);
+	p->val = 0;
+	p->defs = 0;
+	p->uses = NULL;
+	p->next = symbols;
+	symbols = p;
+	return p;
+}
+
+/* Define a symbol
+ */
+void
+def_symbol(char *name, long val) {
+    struct sym_node *p = find_symbol(name);
+    p->val = val;
+    ++p->defs;
+}
+
+/* Use a symbol
+ */
+void
+use_symbol(char *name, long addr) {
+    struct sym_node *p = find_symbol(name);
+    struct use_node *u = (struct use_node *)malloc(sizeof(struct use_node));
+    if (u == NULL) {
+        printf("Out of memory.\n");
+        exit(1);
+    }
+   	u->addr = addr;
+	u->next = p->uses;
+	p->uses = u;
+}
+
+/* Returns value of a symbol.
+ * Returns -1 if the symbol does not exist
+ */
+ long
+ get_symbol_val(char *name) {
+     struct sym_node *p = symbols;
+    	while (p) {
+		if (!strcmp(name, p->name))
+			return (p->val);
+		p = p->next;
+	}
+	return -1;
+ }
+
+ /* Display all symbols and their uses.
+  */
+void
+show_symbols() {
+   	short count = 0;
+	char reply[80];
+	struct sym_node *p = symbols;
+	while (p) {
+		struct use_node *u = p->uses;
+		printf("%-8s = %4ld  Used at: ", p->name, p->val);
+		while (u) {
+			printf("%ld ", u->addr);
+			u = u->next;
+		}
+		printf("\n");
+		p = p->next;
+		if (++count > 20) {
+			printf("Press enter to continue");
+			fgets(reply, sizeof(reply), stdin);
+			count = 0;
+		}
+	}
+}
+
+/* check symbol list for errors and return the number of errors
+ */
+int
+check_symbols() {
+   	int errors = 0;
+	struct sym_node* p = symbols;
+	while (p) {
+		if (p->defs == 0) {
+			printf("Undefined symbol: %s.\n", p->name);
+			errors++;
+		}
+		else if (p->defs > 1) {
+			printf("Redefined symbol: %s.\n", p->name);
+			errors++;
+		}
+		p = p->next;
+	}
+	return errors;
+}
+
+/* store symbols
+ */
+void
+store_symbols() {
+   	struct sym_node* p = symbols;
+	while (p) {
+		struct use_node* u = p->uses;
+		while (u) {
+			long wordaddr = (u->addr) >> 2;
+			switch (memory[wordaddr].content) {
+			case 'b':
+				memory[wordaddr].word.format_b.k = (int)p->val;
+				break;
+			case 'd':
+				memory[wordaddr].word.data = p->val;
+				break;
+			default:
+				printf("Symbol storage error\n");
+				break;
+			}
+			u = u->next;
+		}
+		p = p->next;
+	}
+}
+
 /************************************************ LEXING & PARSING SECTION **************************************************/
 
 enum token_type {
@@ -587,15 +737,83 @@ next() {
  */
 void
 match(enum token_type kind) {
-
+    if (token.kind == kind) {
+		next();
+		return;
+	}
+	switch (kind) {
+    	case T_COMMA:
+    		syntax_error("',' expected");
+    		break;
+    	case T_LP:
+    		syntax_error("'(' expected");
+    		break;
+    	case T_RP:
+    		syntax_error("')' expected");
+    		break;
+    	default:
+    		syntax_error("Syntax error");
+    		break;
+	}
 }
 
 /* Parse an opcode
  */
 short
 get_op() {
+    if (token.kind == T_OP) {
+        short res = token.op;
+        next();
+        return res;
+    }
+   	syntax_error("Opcode expected");
+	return 0;
+}
+
+/* Parse ar eg and return the register number
+ */
+short
+get_reg() {
+    if (token.kind == T_REG) {
+        short res = token.reg;
+        next();
+        return res;
+    }
+    syntax_error("Register expected");
     return 0;
 }
+
+/* Parse a constant (number or symbol) and return value
+ */
+long
+get_long(long addr) {
+    if (token.kind == T_NUM) {
+        long res = token.int_val;
+        next();
+        return res;
+    } else if (token.kind == T_SYM) {
+        use_symbol(token.sym_val, addr);
+        next();
+        return 0;
+    }
+    syntax_error("Constant expected");
+    return 0;
+}
+
+/* get_long(), but checks that its argument can be stored in 16 bits.
+ */
+int
+get_int(long addr) {
+   	long val = get_long(addr);
+	if (labs(val) <= 32767)
+		return (int)val;
+	syntax_error("Value cannot be represented with 16 bits");
+	return 0;
+}
+
+char buffer[BUF_LEN];		/* Input buffer */
+long addr = 0;
+int line_num = 0;
 
 /* read a line of source code (assembly) from the buffer
 */
@@ -608,12 +826,21 @@ read_line() {
  */
 void
 load(FILE* f_in, FILE* f_out, short listing) {
-
+    line_num = 0;
+    while (fgets(buffer, BUF_LEN - 1, f_in)) {
+        long old_addr = addr;
+        ++line_num;
+        read_line();
+        if (listing)
+			fprintf(f_out, "%5d %5ld %s", line_num, old_addr, buffer);
+		if (strcmp(err_msg, "")) {
+			printf("%5d %5ld %s", line_num, old_addr, buffer);
+			printf("      >>>>> %s\n", err_msg);
+			if (listing)
+    			fprintf(f_out, "      >>>>> %s\n", err_msg);
+		}
+    }
 }
-
-/************************************************ SYMTAB SECTION **************************************************/
-
-
 
 /************************************************ EXECUTION SECTION **************************************************/
 short running;          /* true: processor running, false: processor not running (error) */
