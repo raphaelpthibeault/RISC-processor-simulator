@@ -1,6 +1,7 @@
 #include <cpu.h>
 
 void runtime_error(char*);
+void syntax_error(char*);
 
 /************************************************ MEMORY SECTION **************************************************/
 
@@ -300,7 +301,7 @@ show_format_a(long addr, word_type word) {
     			addr, op_code, word.format_a.ri, word.format_a.rj);
     		break;
 
-  		/* No operands */
+        /* No operands */
     	case nop:
     	case hlt:
     		printf("%5ld %-6s",
@@ -345,10 +346,10 @@ show_format_b(long addr, word_type word) {
     	case clei:
     	case cgti:
     	case cgei:
-    		printf("%5ld %-6s   r%d, r%d, %d",
-    			addr, op_code, word.format_b.ri,
-    			word.format_b.rj, word.format_b.k);
-    		break;
+            printf("%5ld %-6s   r%d, r%d, %d",
+                    addr, op_code, word.format_b.ri,
+                    word.format_b.rj, word.format_b.k);
+            break;
 
         /* Operands Ri, K */
      	case sl:
@@ -356,24 +357,24 @@ show_format_b(long addr, word_type word) {
     	case bz:
     	case bnz:
     	case jl:
-    		printf("%5ld %-6s   r%d, %d",
-    			addr, op_code, word.format_b.ri, word.format_b.k);
-    		break;
+            printf("%5ld %-6s   r%d, %d",
+                    addr, op_code, word.format_b.ri, word.format_b.k);
+            break;
 
         /* Operands Ri */
      	case gtc:
     	case ptc:
     	case jr:
-    		printf("%5ld %-6s   r%d",
-    			addr, op_code, word.format_b.ri);
-    		break;
+            printf("%5ld %-6s   r%d",
+                    addr, op_code, word.format_b.ri);
+            break;
 
         /* Operands K */
        	case j:
-    	printf("%5ld %-6s   %d",
-    		addr, op_code, word.format_b.k);
-    	break;
-	}
+            printf("%5ld %-6s   %d",
+                    addr, op_code, word.format_b.k);
+            break;
+    }
 }
 
 /* Convert a word to a string of 4 chars.
@@ -417,11 +418,11 @@ show_word(long addr) {
             break;
         case 'd':
             printf("%5ld  %08lX  %s  %4ld", addr, word.data,
-			word_to_chars(char_buf, word), word.data);
-    		break;
+                word_to_chars(char_buf, word), word.data);
+            break;
         case 'u':
             printf("%5ld  ??", addr);
-    		break;
+            break;
     }
 }
 
@@ -459,14 +460,14 @@ find_symbol(char *name) {
         printf("Out of memory.\n");
         exit(1);
     }
-   	p->name = (char *)malloc(strlen(name) + 1);
-	strcpy(p->name, name);
-	p->val = 0;
-	p->defs = 0;
-	p->uses = NULL;
-	p->next = symbols;
-	symbols = p;
-	return p;
+    p->name = (char *)malloc(strlen(name) + 1);
+    strcpy(p->name, name);
+    p->val = 0;
+    p->defs = 0;
+    p->uses = NULL;
+    p->next = symbols;
+    symbols = p;
+    return p;
 }
 
 /* Define a symbol
@@ -488,9 +489,9 @@ use_symbol(char *name, long addr) {
         printf("Out of memory.\n");
         exit(1);
     }
-   	u->addr = addr;
-	u->next = p->uses;
-	p->uses = u;
+    u->addr = addr;
+    u->next = p->uses;
+    p->uses = u;
 }
 
 /* Returns value of a symbol.
@@ -498,83 +499,83 @@ use_symbol(char *name, long addr) {
  */
  long
  get_symbol_val(char *name) {
-     struct sym_node *p = symbols;
-    	while (p) {
-		if (!strcmp(name, p->name))
-			return (p->val);
-		p = p->next;
-	}
-	return -1;
+    struct sym_node *p = symbols;
+    while (p) {
+        if (!strcmp(name, p->name))
+            return (p->val);
+        p = p->next;
+    }
+    return -1;
  }
 
  /* Display all symbols and their uses.
   */
 void
 show_symbols() {
-   	short count = 0;
-	char reply[80];
-	struct sym_node *p = symbols;
-	while (p) {
-		struct use_node *u = p->uses;
-		printf("%-8s = %4ld  Used at: ", p->name, p->val);
-		while (u) {
-			printf("%ld ", u->addr);
-			u = u->next;
-		}
-		printf("\n");
-		p = p->next;
-		if (++count > 20) {
-			printf("Press enter to continue");
-			fgets(reply, sizeof(reply), stdin);
-			count = 0;
-		}
-	}
+    short count = 0;
+    char reply[80];
+    struct sym_node *p = symbols;
+    while (p) {
+        struct use_node *u = p->uses;
+        printf("%-8s = %4ld  Used at: ", p->name, p->val);
+        while (u) {
+            printf("%ld ", u->addr);
+            u = u->next;
+        }
+        printf("\n");
+        p = p->next;
+        if (++count > 20) {
+            printf("Press enter to continue");
+            fgets(reply, sizeof(reply), stdin);
+            count = 0;
+        }
+    }
 }
 
 /* check symbol list for errors and return the number of errors
  */
 int
 check_symbols() {
-   	int errors = 0;
-	struct sym_node* p = symbols;
-	while (p) {
-		if (p->defs == 0) {
-			printf("Undefined symbol: %s.\n", p->name);
-			errors++;
-		}
-		else if (p->defs > 1) {
-			printf("Redefined symbol: %s.\n", p->name);
-			errors++;
-		}
-		p = p->next;
-	}
-	return errors;
+    int errors = 0;
+    struct sym_node* p = symbols;
+    while (p) {
+        if (p->defs == 0) {
+            printf("Undefined symbol: %s.\n", p->name);
+            errors++;
+        }
+        else if (p->defs > 1) {
+            printf("Redefined symbol: %s.\n", p->name);
+            errors++;
+        }
+        p = p->next;
+    }
+    return errors;
 }
 
 /* store symbols
  */
 void
 store_symbols() {
-   	struct sym_node* p = symbols;
-	while (p) {
-		struct use_node* u = p->uses;
-		while (u) {
-			long wordaddr = (u->addr) >> 2;
-			switch (memory[wordaddr].content) {
-			case 'b':
-				memory[wordaddr].word.format_b.k = (int)p->val;
-				break;
-			case 'd':
-				memory[wordaddr].word.data = p->val;
-				break;
-			default:
-				printf("Symbol storage error\n");
-				break;
-			}
-			u = u->next;
-		}
-		p = p->next;
-	}
+    struct sym_node* p = symbols;
+    while (p) {
+        struct use_node* u = p->uses;
+        while (u) {
+            long wordaddr = (u->addr) >> 2;
+            switch (memory[wordaddr].content) {
+            case 'b':
+                memory[wordaddr].word.format_b.k = (int)p->val;
+                break;
+            case 'd':
+                memory[wordaddr].word.data = p->val;
+                break;
+            default:
+                printf("Symbol storage error\n");
+                break;
+            }
+            u = u->next;
+        }
+        p = p->next;
+    }
 }
 
 /************************************************ LEXING & PARSING SECTION **************************************************/
@@ -593,7 +594,7 @@ struct {
 } token;
 
 char old_val[TOK_LEN];
-char *err_msg;                      /* error message */
+char err_msg[BUF_LEN];                      /* error message */
 int error_count = 0;                /* number of errors detected */
 char *bp;                           /* buffer pointer */
 
@@ -804,11 +805,11 @@ get_long(long addr) {
  */
 int
 get_int(long addr) {
-   	long val = get_long(addr);
-	if (labs(val) <= 32767)
-		return (int)val;
-	syntax_error("Value cannot be represented with 16 bits");
-	return 0;
+    long val = get_long(addr);
+    if (labs(val) <= 32767)
+        return (int)val;
+    syntax_error("Value cannot be represented with 16 bits");
+    return 0;
 }
 
 char buffer[BUF_LEN];		/* Input buffer */
@@ -827,13 +828,13 @@ read_line() {
     strcpy(old_val, "");
     next();
     while (token.kind == T_SYM) {
-		def_symbol(token.sym_val, addr);
-		next();
-	}
+        def_symbol(token.sym_val, addr);
+        next();
+    }
     if (token.kind == T_OP) {
         switch (token.op) {
-			/* Format A -- registers only */
-			/* Operands Ri, Rj, Rk */
+                /* Format A -- registers only */
+                /* Operands Ri, Rj, Rk */
             case add:
             case sub:
             case mul:
@@ -1062,13 +1063,13 @@ load(FILE* f_in, FILE* f_out, short listing) {
         ++line_num;
         read_line();
         if (listing)
-			fprintf(f_out, "%5d %5ld %s", line_num, old_addr, buffer);
-		if (strcmp(err_msg, "")) {
-			printf("%5d %5ld %s", line_num, old_addr, buffer);
-			printf("      >>>>> %s\n", err_msg);
-			if (listing)
-    			fprintf(f_out, "      >>>>> %s\n", err_msg);
-		}
+            fprintf(f_out, "%5d %5ld %s", line_num, old_addr, buffer);
+        if (strcmp(err_msg, "")) {
+            printf("%5d %5ld %s", line_num, old_addr, buffer);
+            printf("      >>>>> %s\n", err_msg);
+            if (listing)
+                fprintf(f_out, "      >>>>> %s\n", err_msg);
+        }
     }
 }
 
@@ -1081,43 +1082,421 @@ long num_steps;         /* number of instructions executed in trace mode */
 
 void
 runtime_error(char *msg) {
-   	printf("\n%5ld Run-time error: %s.\n", ic, msg);
-	running = FALSE;
+    printf("\n%5ld Run-time error: %s.\n", ic, msg);
+    running = FALSE;
 }
 
 /* execute the instruction at ic
  */
 void 
 exec_instr(short tracing) {
-    
+    long addr, w1, w2, k, rk;
+    short content = fetch();
+    int ch;
+    if (!running) return;
+    new_reg = -1;
+    new_mem = -1;
+    switch (content) {
+        /* Format A instructions with register operands */ 
+        case 'a': 
+            switch (ir.format_a.op) {
+                    /* add Ri, Rj, Rk */
+                case add:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) + fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* sub Ri, Rj, Rk */
+                case sub:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) - fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* mul Ri, Rj, Rk */
+                case mul:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) * fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* div Ri, Rj, Rk */
+                case newdiv:
+                    rk = fetch_reg(ir.format_a.rk);
+                    if (rk == 0)
+                        runtime_error("division by zero");
+                    else {
+                        store_reg(ir.format_a.ri,
+                            fetch_reg(ir.format_a.rj) / rk);
+                        new_reg = ir.format_a.ri;
+                    }
+                    break;
+
+                    /* mod Ri, Rj, Rk */
+                case mod:
+                    rk = fetch_reg(ir.format_a.rk);
+                    if (rk == 0)
+                        runtime_error("modulus with zero operand");
+                    else {
+                        store_reg(ir.format_a.ri,
+                            fetch_reg(ir.format_a.rj) % rk);
+                        new_reg = ir.format_a.ri;
+                    }
+                    break;
+
+                    /* and Ri, Rj, Rk  (32-bit logical AND) */
+                case and :
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) & fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* or Ri, Rj, Rk   (32-bit logical OR) */
+                case or :
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) | fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* ceq Ri, Rj, Rk  (Rj = Rk) */
+                case ceq:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) == fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* cne Ri, Rj, Rk */
+                case cne:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) != fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* clt Ri, Rj, Rk */
+                case clt:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) < fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* cle Ri, Rj, Rk */
+                case cle:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) <= fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* cgt Ri, Rj, Rk */
+                case cgt:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) > fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* cge Ri, Rj, Rk */
+                case cge:
+                    store_reg(ir.format_a.ri,
+                        fetch_reg(ir.format_a.rj) >= fetch_reg(ir.format_a.rk));
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* not Ri, Rj  (32-bit complement) */
+                case not:
+                    if (fetch_reg(ir.format_a.rj) == 0)
+                        store_reg(ir.format_a.ri, 1);
+                    else
+                        store_reg(ir.format_a.ri, 0);
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* jlr Ri, Rj  (Jump to register and link) */
+                case jlr:
+                    store_reg(ir.format_a.ri, ic);
+                    ic = fetch_reg(ir.format_a.rj);
+                    new_reg = ir.format_a.ri;
+                    break;
+
+                    /* nop */
+                case nop:
+                    break;
+
+                    /* hlt */
+                case hlt:
+                    running = FALSE;
+                    break;
+            }
+            break;
+
+        /* Format B instructions have a 16-bit immediate operand */
+        case 'b':
+            switch (ir.format_b.op) {
+                    /* lw Ri, K(Rj)  (Load word) */
+                case lw:
+                    store_reg(ir.format_b.ri,
+                        fetch_mem_word(fetch_reg(ir.format_b.rj) + (long)ir.format_b.k));
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* lb Ri, K(Rj)  (Load byte) */
+                case lb:
+                    w1 = fetch_mem_byte(fetch_reg(ir.format_b.rj) + (long)ir.format_b.k);
+                    w2 = fetch_reg(ir.format_b.ri);
+                    store_reg(ir.format_b.ri, (w1) | (w2 & ~255));
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* sw K(Rj), Ri  (Store word) */
+                case sw:
+                    new_mem = fetch_reg(ir.format_b.rj) + (long)ir.format_b.k;
+                    store_mem_word(new_mem, fetch_reg(ir.format_b.ri));
+                    break;
+
+                    /* sb K(Rj), Ri  (Store byte) */
+                case sb:
+                    new_mem = fetch_reg(ir.format_b.rj) + (long)ir.format_b.k;
+                    store_mem_byte(new_mem, (BYTE)(fetch_reg(ir.format_b.ri) & 255));
+                    break;
+
+                    /* addi Ri, Rj, K  (Add immediate) */
+                case addi:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) + (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* subi Ri, Rj, K */
+                case subi:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) - (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* muli Ri, Rj, K */
+                case muli:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) * (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* divi Ri, Rj, K */
+                case divi:
+                    k = (long)ir.format_b.k;
+                    if (k == 0)
+                        runtime_error("division by zero");
+                    else {
+                        store_reg(ir.format_b.ri,
+                            fetch_reg(ir.format_b.rj) / k);
+                        new_reg = ir.format_b.ri;
+                    }
+                    break;
+
+                    /* modi Ri, Rj, K */
+                case modi:
+                    k = (long)ir.format_b.k;
+                    if (k == 0)
+                        runtime_error("division by zero");
+                    else {
+                        store_reg(ir.format_b.ri,
+                            fetch_reg(ir.format_b.rj) % k);
+                        new_reg = ir.format_b.ri;
+                    }
+                    break;
+
+                    /* andi Ri, Rj, K */
+                case andi:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) & (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* ori Ri, Rj, K */
+                case ori:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) | (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* ceqi Ri, Rj, K */
+                case ceqi:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) == (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* cnei Ri, Rj, K */
+                case cnei:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) != (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* clti Ri, Rj, K */
+                case clti:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) < (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* clei Ri, Rj, K */
+                case clei:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) <= (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* cgti Ri, Rj, K */
+                case cgti:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) > (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* cgei Ri, Rj, K */
+                case cgei:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.rj) >= (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* sl Ri, K  (Shift left logical) */
+                case sl:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.ri) << (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* sr Ri, K  (Shift right logical) */
+                case sr:
+                    store_reg(ir.format_b.ri,
+                        fetch_reg(ir.format_b.ri) >> (long)ir.format_b.k);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* bz Ri, K  (Branch to K if Ri == 0) */
+                case bz:
+                    if (fetch_reg(ir.format_b.ri) == 0)
+                        ic = (long)ir.format_b.k;
+                    break;
+
+                    /* bnz Ri, K  (Branch to K if Ri != 0) */
+                case bnz:
+                    if (fetch_reg(ir.format_b.ri) != 0)
+                        ic = (long)ir.format_b.k;
+                    break;
+
+                    /* jl Ri, K  (Branch to K with link in Ri) */
+                case jl:
+                    store_reg(ir.format_b.ri, ic);
+                    ic = (long)ir.format_b.k;
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* getc Ri  (Read one character to Ri) */
+                case gtc:
+                    if (tracing) {
+                        char buf[80];
+                        printf("\nEnter data for getc: ");
+                        fgets(buf, sizeof(buf), stdin);
+                        if (buf[0] == '\0')
+                            ch = '\n';
+                        else
+                            ch = buf[0];
+                    }
+                    else
+                        ch = (BYTE)getchar();
+                    store_reg(ir.format_b.ri, ch);
+                    new_reg = ir.format_b.ri;
+                    break;
+
+                    /* putc Ri  (Write the character in Ri) */
+                case ptc:
+                    if (tracing)
+                        printf("  Output from putc: %c",
+                            fetch_reg(ir.format_b.ri));
+
+                    else
+                        printf("%c", fetch_reg(ir.format_b.ri));
+                    break;
+
+                    /* jr Ri  (Jump to Ri) */
+                case jr:
+                    ic = fetch_reg(ir.format_b.ri);
+                    break;
+
+                    /* j K  (Jump to K) */
+                case j:
+                    ic = (long)ir.format_b.k;
+                    break;
+
+            }
+            break;
+    }
 }
 
 /* Dump words of memory from addr-10 to addr+10.
  */
 void 
-dump(long adr) {
-
+dump(long addr) {
+    long first = (addr - RANGE) & ~3;
+    long last = (addr + RANGE) & ~3;
+	if (first < 0)
+		first = 0;
+    if (last > MEMSIZE)
+        last = MEMSIZE;
+    for (addr = 0; addr < last; addr+=4) {
+        show_word(addr);
+        printf("\n");
+    }
 }
 
 /* Display a register 
  */
 void 
 show_reg(short reg_num) {
-
+    word_type word;
+    char cbuf[5];
+    word.data = registers[reg_num];
+    printf("   r%d =  %08lX  %s  %4ld", reg_num, word.data,
+		word_to_chars(cbuf, word), word.data);
 }
 
 /* execute an instruction in trace mode
  */
 void 
 trace_instr() {
-
+    word_type word;
+	char cbuf[5];
+	show_word(ic);
+	exec_instr(TRUE);
+	if (running) {
+		if (new_reg >= 0)
+			show_reg(new_reg);
+		else if (new_mem >= 0) {
+			long addr = new_mem >> 2;
+			printf("   M[%ld] =  %08lX  %s  %ld", new_mem,
+				memory[addr].word.data,
+				word_to_chars(cbuf, memory[addr].word),
+				memory[addr].word.data);
+		}
+		printf("\n");
+		if (memory[ic >> 2].breakpoint) {
+			printf("%5ld Breakpoint\n", ic);
+			running = FALSE;
+		}
+	}
 }
 
 /* execute steps number of instructions in trace mode
  */
 void 
 run_for(long steps) {
-
+    long count;
+    running = TRUE;
+    for (count = 0; count < steps; ++count) {
+        trace_instr();
+        if (!running) break;
+    }
 }
 
 /* Fetch the operand of a trace instruction. 
@@ -1125,7 +1504,26 @@ run_for(long steps) {
  */
 long 
 get_operand(char *cp) {
-    return 0L;
+    char *first;
+    long val;
+    while (*cp == ' ' || *cp == '\t') ++cp;
+    first = cp;
+    if (isdigit(*cp)) {
+        if (sscanf(first, "%ld", &val) == 1) {
+            return val;
+        } else {
+            printf("?\n");
+            return -1;
+        }
+    } else if (isalpha(*cp)) {
+        val = get_symbol_val(cp);
+		if (val < 0)
+			printf("?\n");
+		return val;
+    } else {
+        printf("?\n");
+        return -1;
+    }
 }
 
 void 
@@ -1155,7 +1553,142 @@ show_trace_usage() {
 
 void 
 exec_trace() {
+	char cmd[BUF_LEN];
+	long addr;
+	short reg_num;
+	ic = entry_point;
+	num_steps = 10;
+	running = TRUE;
+	while (1) {
+		printf("%5ld:- ", ic);
+		fgets(cmd, sizeof(cmd), stdin);
+		if (!strcmp(cmd, "q") || !strcmp(cmd, "Q"))
+			break;
+		else if (!strcmp(cmd, ""))
+			run_for(num_steps);
+		else if (isdigit(*cmd)) {
+			long steps = get_operand(cmd);
+			if (steps > 0)
+				run_for(steps);
+		}
+		else {
+			char* cp = cmd;
+			switch (*cp++) {
+                    /* B = show all breakpoints; Bn = set breakpoint. */
+                case 'b': case 'B':
+                    if (*cp == '\0') {
+                        printf("Breakpoints are at: ");
+                        for (addr = 0; addr < MEMSIZE; addr++) {
+                            if (memory[addr].breakpoint)
+                                printf("%ld ", addr << 2);
+                        }
+                        printf("\n");
+                    }
+                    else {
+                        addr = get_operand(cp);
+                        if (addr >= 0)
+                            memory[addr >> 2].breakpoint = TRUE;
+                    }
+                    break;
 
+                    /* C = clear all breakpoints; Cn = clear a breakpoint. */
+                case 'c': case 'C':
+                    if (*cp == '\0') {
+                        for (addr = 0; addr < MEMSIZE; addr++)
+                            memory[addr].breakpoint = FALSE;
+                    }
+                    else {
+                        addr = get_operand(cp);
+                        if (addr >= 0)
+                            memory[addr >> 2].breakpoint = FALSE;
+                    }
+                    break;
+
+                    /* D = dump memory near <ic>; Dn = dump memory near n. */
+                case 'd': case 'D':
+                    if (*cp == '\0')
+                        dump(ic);
+                    else {
+                        addr = get_operand(cp);
+                        if (addr >= 0)
+                            dump(addr);
+                    }
+                    break;
+
+                    /* Explain how to use it. */
+                case 'h': case 'H': case '?':
+                    show_trace_usage();
+                    break;
+
+                    /* I = set <ic> to entry point; In = set <ic> to n. */
+                case 'i': case 'I':
+                    if (*cp == '\0')
+                        ic = entry_point;
+                    else {
+                        addr = get_operand(cp);
+                        if (addr >= 0)
+                            ic = addr;
+                    }
+                    break;
+
+                    /* K = set steps to 10; Kn = set steps to n. */
+                case 'k': case 'K':
+                    if (*cp == '\0')
+                        num_steps = 10;
+                    else {
+                        num_steps = get_operand(cp);
+                        if (num_steps < 0)
+                            num_steps = 10;
+                    }
+                    break;
+
+                    /* R = show registers. */
+                case 'r': case 'R':
+                    for (reg_num = 0; reg_num < MAX_REG; reg_num++) {
+                        show_reg(reg_num);
+                        printf("\n");
+                    }
+                    break;
+
+                    /* S = show symbols. */
+                case 's': case 'S':
+                    show_symbols();
+                    break;
+
+                    /* X = run to next breakpoint; Xn = run to n. */
+                case 'x': case 'X':
+                    if (*cp == '\0') {
+                        running = TRUE;
+                        while (running) {
+                            exec_instr(FALSE);
+                            if (memory[ic >> 2].breakpoint) {
+                                printf("%5ld Breakpoint\n", ic);
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        addr = get_operand(cp);
+                        if (addr < 0)
+                            printf("?\n");
+                        else {
+                            running = TRUE;
+                            while (running) {
+                                exec_instr(FALSE);
+                                if (ic == addr)
+                                    break;
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    printf("?\n");
+                    break;
+			}
+		}
+	}
+	printf("\n%ld cycles.\n", cycles);
 }
 
 void 
@@ -1167,4 +1700,221 @@ exec() {
     }
     printf("\n%ld cycles.\n", cycles);
 }
+
+/************************************************ MAIN PROGRAM **************************************************/
+
+void show_usage() {
+	printf("Usage:\n");
+	printf("         psim { option | filename }\n");
+	printf("The command line may contain source file names and options in any order.\n");
+	printf("There should be at least one source file.  Source files will be loaded\n");
+	printf("in the order in which they are given.\n");
+	printf("Options:\n");
+	printf("       +p           print listing\n");
+	printf("       -p (default) do not print listing\n");
+	printf("       +s           display symbol values\n");
+	printf("       -s (default) do not display symbol values\n");
+	printf("       +t           start in trace mode\n");
+	printf("       -t (default) execute without tracing\n");
+	printf("       +x (default) execute the program\n");
+	printf("       -x           do not execute the program\n");
+	printf("Input files:\n");
+	printf("       If an input file name does not contain `.', the suffix\n");
+	printf("       `.n' will be appended to it.\n");
+	printf("Listing files:\n");
+	printf("       Source files may be listed selectively.  The command\n");
+	printf("            psim -p lib +p appl\n");
+	printf("       would create a listing for `appl.m' but not for `lib.m'.\n");
+	printf("       The list file is named `psim.prn' by default.\n");
+	printf("       Use +o or -o followed by a name to changes the list file name.\n");
+}
+
+int main(int argc, char* argv[]) {
+	struct {
+            char name[MAX_FNAME_LEN];
+            short list;
+	} filedescs[MAX_INPUT_FILES];
+	int numfiles = 0;
+	char outname[MAX_FNAME_LEN] = "";
+	short dump = FALSE;			/* D Dump memory */
+	short listing = FALSE;		/* P Generate a listing of the source code */
+	short symbols = FALSE;		/* S Display symbol values */
+	short tracing = FALSE;		/* T Execute program in trace mode */
+	short execute = TRUE;		/* X Execute the program after loading */
+	short listreq = FALSE;		/* A listing is needed */
+	long addr;
+	int arg, fil;
+	FILE *inp, *out = NULL;
+	registers[0] = 0;   /* Register 0 is always 0. */
+
+	if (argc <= 1) {
+            show_usage();
+            exit(0);
+	}
+
+	/* Process command line arguments.
+	 * There should be at least one argument.  Arguments that start with
+	 * + (-) turn flags on (off).  Other arguments are input file names.
+	 * The listing switch (+-l) is processed in sequence so that files
+	 * may be listed selectively.
+	 */
+
+	for (arg = 1; arg < argc; arg++) {
+            char* p = argv[arg];
+            if (*p == '+') {
+                p++;
+                switch (*p++) {
+                case 'd': case 'D':
+                        dump = TRUE;
+                        break;
+                case 'o': case 'O':
+                        strcpy(outname, p);
+                        break;
+                case 'p': case 'P':
+                        listing = TRUE;
+                        break;
+                case 's': case 'S':
+                        symbols = TRUE;
+                        break;
+                case 't': case 'T':
+                        tracing = TRUE;
+                        break;
+                case 'x': case 'X':
+                        execute = TRUE;
+                        break;
+                default:
+                        printf("Illegal option: +%s\n", --p);
+                        exit(1);
+                }
+            }
+            else if (*p == '-') {
+                p++;
+                switch (*p++) {
+                    case 'd': case 'D':
+                            dump = FALSE;
+                            break;
+                    case 'o': case 'O':
+                            strcpy(outname, p);
+                            break;
+                    case 'p': case 'P':
+                            listing = FALSE;
+                            break;
+                    case 's': case 'S':
+                            symbols = FALSE;
+                            break;
+                    case 't': case 'T':
+                            tracing = FALSE;
+                            break;
+                    case 'x': case 'X':
+                            execute = FALSE;
+                            break;
+                    default:
+                            printf("Illegal option: -%s\n", --p);
+                            exit(1);
+                }
+            }
+            else {
+                if (numfiles >= MAX_INPUT_FILES) {
+                        printf("Too many input files!\n");
+                        exit(1);
+                }
+                strcpy(filedescs[numfiles].name, p);
+                filedescs[numfiles].list = listing;
+                if (listing)
+                        listreq = TRUE;
+                numfiles++;
+            }
+	}
+
+	/* Nothing to do if there were no files on the command line. */
+
+	if (numfiles == 0) {
+            printf("No input files!\n");
+            exit(1);
+	}
+
+	/* 	Attempt to open an output file if a listing is required.
+	 * If no output file was named, use a default name.
+	 */
+
+	if (listreq) {
+            if (strlen(outname) == 0)
+                strcpy(outname, "psim.prn");
+            if ((out = fopen(outname, "w")) == NULL) {
+                printf("Unable to open listing file %s.\n", outname);
+                exit(1);
+            }
+            printf("Writing listing to %s.\n", outname);
+	}
+
+	/* Process each input file. If no extension is given, assume .m.
+	 * If the file can be opened, load assembler code from it.
+	 */
+
+	init_mem();
+	def_symbol("topaddr", 4 * MEMSIZE);
+	for (fil = 0; fil < numfiles; fil++) {
+            if (!strchr(filedescs[fil].name, '.'))
+                strcat(filedescs[fil].name, ".m");
+            if ((inp = fopen(filedescs[fil].name, "r")) == NULL) {
+                printf("Unable to open input file: %s.\n", filedescs[fil].name);
+                exit(1);
+            }
+            else {
+                short listing = filedescs[fil].list;
+                printf("Loading %s.\n", filedescs[fil].name);
+                if (listing) {
+                    fprintf(out, "psim listing of %s.\n\n", filedescs[fil].name);
+                    load(inp, out, TRUE);
+                    fprintf(out, "\n");
+                }
+                else
+                    load(inp, out, FALSE);
+                fclose(inp);
+            }
+	}
+	if (listreq)
+            fclose(out);
+
+	/* Check symbols and entry point. If there are errors, stop now. */
+	error_count += check_symbols();
+	if (entry_point < 0) {
+            printf("There is no `entry' directive.\n");
+            ++error_count;
+	}
+	if (error_count > 0) {
+            printf("Loader errors -- no execution.\n");
+            exit(1);
+	}
+
+	/* Store values of symbols where they are used in the program.
+	 * Display them if requested.
+	 */
+	store_symbols();
+	if (symbols)
+            show_symbols();
+
+	/* If a dump was requested, dump the memory.  This option is not
+	 * advertised and therefore need not be supported.
+	 */
+
+	if (dump) {
+            printf("Memory dump:\n");
+            for (addr = 0; addr < MEMSIZE; addr += 4) {
+                if (memory[addr >> 2].content != 'u') {
+                    show_word(addr);
+                    printf("\n");
+                }
+            }
+            printf("\n");
+	}
+
+	/* Execute the program in normal or trace mode. */
+	if (execute) {
+            if (tracing)
+                exec_trace();
+            else exec();
+	}
+}
+
 

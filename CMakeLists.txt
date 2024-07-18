@@ -8,6 +8,5 @@ include_directories(
 )
 
 add_executable(psim
-    src/main.c
     src/cpu.c
 )

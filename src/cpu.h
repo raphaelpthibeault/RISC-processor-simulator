@@ -44,21 +44,10 @@ typedef union {
         unsigned ri: 4;
         unsigned rj: 4;
         unsigned : 2;
-        unsigned k: 16;
+        int k: 16;              /* CANNOT USE UNSIGNED */
     } format_b;
     BYTE bytes[4];
     long data;
 } word_type;
-
-/* MEMORY */
-void init_mem();
-char fetch();
-long fetch_mem_word(long);
-void store_mem_word(long, long);
-BYTE fetch_mem_byte(long);
-void store_mem_byte(long, BYTE);
-void store_mem_instr(long, word_type, char);
-void store_mem_char(long, short, char);
-
 
 #endif // CPU_H
