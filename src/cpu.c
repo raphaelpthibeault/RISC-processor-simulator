@@ -1074,9 +1074,97 @@ load(FILE* f_in, FILE* f_out, short listing) {
 
 /************************************************ EXECUTION SECTION **************************************************/
 short running;          /* true: processor running, false: processor not running (error) */
+short new_reg;          /* address of a register that has changed */
+long new_mem;           /* address of a memory location that has changed */
+long num_steps;         /* number of instructions executed in trace mode */
+
 
 void
 runtime_error(char *msg) {
    	printf("\n%5ld Run-time error: %s.\n", ic, msg);
 	running = FALSE;
 }
+
+/* execute the instruction at ic
+ */
+void 
+exec_instr(short tracing) {
+    
+}
+
+/* Dump words of memory from addr-10 to addr+10.
+ */
+void 
+dump(long adr) {
+
+}
+
+/* Display a register 
+ */
+void 
+show_reg(short reg_num) {
+
+}
+
+/* execute an instruction in trace mode
+ */
+void 
+trace_instr() {
+
+}
+
+/* execute steps number of instructions in trace mode
+ */
+void 
+run_for(long steps) {
+
+}
+
+/* Fetch the operand of a trace instruction. 
+ * The operand should be either a number or a symbol.
+ */
+long 
+get_operand(char *cp) {
+    return 0L;
+}
+
+void 
+show_trace_usage() {
+	printf("The tracer prompts with `IC:-\'.  IC is the instruction counter.\n");
+	printf("Upper or lower case letters are accepted.  n must be positive.\n");
+	printf("\n");
+	printf("<cr>     Trace K instructions.\n");
+	printf("n        Trace n instructions.\n");
+	printf("B        Display breakpoints.\n");
+	printf("Bn       Set a breakpoint at n.\n");
+	printf("C        Clear all breakpoints.\n");
+	printf("Cn       Clear the breakpoint at n.\n");
+	printf("D        Dump memory near IC.\n");
+	printf("Dn       Dump memory near n.\n");
+	printf("I        Set IC to entry point.\n");
+	printf("In       Set IC to n.\n");
+	printf("K        Set K (# steps executed by <cr>) to 10.\n");
+	printf("Kn       Set K to n.\n");
+	printf("Q        Quit.\n");
+	printf("R        Show registers.\n");
+	printf("S        Show symbols.\n");
+	printf("X        Run to next break point.\n");
+	printf("Xn       Run until IC = n.\n");
+	printf("\n");
+}
+
+void 
+exec_trace() {
+
+}
+
+void 
+exec() {
+    ic = entry_point;
+    running = TRUE;
+    while (running) {
+        exec_instr(FALSE);
+    }
+    printf("\n%ld cycles.\n", cycles);
+}
+
