@@ -819,7 +819,237 @@ int line_num = 0;
 */
 void
 read_line() {
+    int c;
+    word_type word;
+    word.data = 0;
+    bp = buffer;
+    strcpy(err_msg, "");
+    strcpy(old_val, "");
+    next();
+    while (token.kind == T_SYM) {
+		def_symbol(token.sym_val, addr);
+		next();
+	}
+    if (token.kind == T_OP) {
+        switch (token.op) {
+			/* Format A -- registers only */
+			/* Operands Ri, Rj, Rk */
+            case add:
+            case sub:
+            case mul:
+            case newdiv:
+            case mod:
+            case and:
+            case or:
+            case ceq:
+            case cne:
+            case clt:
+            case cle:
+            case cgt:
+            case cge:
+                word.format_a.op = get_op();
+                word.format_a.ri = get_reg();
+                match(T_COMMA);
+                word.format_a.rj = get_reg();
+                match(T_COMMA);
+                word.format_a.rk = get_reg();
+                store_mem_instr(addr, word, 'a');
+                addr += 4;
+                break;
 
+                /* Operands Ri, Rj */
+            case not:
+            case jlr:
+                word.format_a.op = get_op();
+                word.format_a.ri = get_reg();
+                match(T_COMMA);
+                word.format_a.rj = get_reg();
+                store_mem_instr(addr, word, 'a');
+                addr += 4;
+                break;
+
+                /* No operands */
+            case nop:
+            case hlt:
+                word.format_a.op = get_op();
+                store_mem_instr(addr, word, 'a');
+                addr += 4;
+                break;
+
+                /* Format B - operands and constant fields */
+
+                /* Operands Ri, K(Rj) */
+            case lw:
+            case lb:
+                word.format_b.op = get_op();
+                word.format_b.ri = get_reg();
+                match(T_COMMA);
+                word.format_b.k = get_int(addr);
+                match(T_LP);
+                word.format_b.rj = get_reg();
+                match(T_RP);
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Operands K(Rj), Ri */
+            case sw:
+            case sb:
+                word.format_b.op = get_op();
+                word.format_b.k = get_int(addr);
+                match(T_LP);
+                word.format_b.rj = get_reg();
+                match(T_RP);
+                match(T_COMMA);
+                word.format_b.ri = get_reg();
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Operands Ri, Rj, K */
+            case addi:
+            case subi:
+            case muli:
+            case divi:
+            case modi:
+            case andi:
+            case ori:
+            case ceqi:
+            case cnei:
+            case clti:
+            case clei:
+            case cgti:
+            case cgei:
+                word.format_b.op = get_op();
+                word.format_b.ri = get_reg();
+                match(T_COMMA);
+                word.format_b.rj = get_reg();
+                match(T_COMMA);
+                word.format_b.k = get_int(addr);
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Operands Ri, K */
+            case sl:
+            case sr:
+            case bz:
+            case bnz:
+            case jl:
+                word.format_b.op = get_op();
+                word.format_b.ri = get_reg();
+                match(T_COMMA);
+                word.format_b.k = get_int(addr);
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Operands Ri */
+            case gtc:
+            case ptc:
+            case jr:
+                word.format_b.op = get_op();
+                word.format_b.ri = get_reg();
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Operands K */
+            case j:
+                word.format_b.op = get_op();
+                word.format_b.k = get_int(addr);
+                store_mem_instr(addr, word, 'b');
+                addr += 4;
+                break;
+
+                /* Set the entry point of the program. */
+            case entry:
+                next();
+                if (entry_point < 0) {
+                    entry_point = addr;
+                    break;
+                }
+                syntax_error("More than one entry point");
+                break;
+
+                /* Adjust the address to the next word boundary. */
+            case align:
+                next();
+                if (addr & 3)
+                    addr = (addr & ~3) + 4;
+                break;
+
+                /* Set the address to the given value. */
+            case org:
+                next();
+                addr = get_long(addr);
+                break;
+
+                /* Store words. */
+            case dw:
+                next();
+                while (token.kind == T_NUM || token.kind == T_SYM) {
+                    word.data = get_long(addr);
+                    store_mem_instr(addr, word, 'd');
+                    addr += 4;
+                    if (token.kind == T_COMMA)
+                        next();
+                    else
+                        break;
+                }
+                break;
+
+                /* Store bytes */
+            case db:
+                next();
+                while (1) {
+                    if (token.kind == T_NUM) {
+                        if (0 <= token.int_val && token.int_val <= 255) {
+                            store_mem_char(addr, token.int_val, 'd');
+                            addr++;
+                        }
+                        else
+                            syntax_error("Value cannot be represented with 8 bits");
+                        next();
+                    }
+                    else if (token.kind == T_STR) {
+                        char* t = token.sym_val;
+                        while (*t) {
+                            store_mem_char(addr, *t++, 'd');
+                            addr++;
+                        }
+                        next();
+                    }
+                    if (token.kind == T_COMMA)
+                        next();
+                    else if (token.kind == T_NULL)
+                        break;
+                    else {
+                        syntax_error("Syntax error in byte list");
+                        break;
+                    }
+                }
+                break;
+
+                /* Reserve the given number of words. */
+            case res:
+                next();
+                addr += get_long(addr);
+                break;
+
+                /* Should never get here. */
+            default:
+                syntax_error("Unrecognized statement");
+                break;
+		}
+
+
+    }
+    if (token.kind != T_NULL && error_count < 5) {
+		printf("Warning: junk following `%s' on next line.\n", token.sym_val);
+		printf("%4d  %s\n", line_num, buffer);
+		++error_count;
+	}
 }
 
 /* load a source file
