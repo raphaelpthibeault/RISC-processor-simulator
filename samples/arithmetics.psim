@@ -1,4 +1,4 @@
-% Arithmetic tests for MOON simulator
+% Arithmetic tests for psim
 
       entry
       addi   r14,r0,topaddr  % Set stack pointer

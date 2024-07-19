@@ -1,7 +1,3 @@
-% A Simple MOON Library (new version)
-% Author: Peter Grogono
-% Last modified: 8 March 1995
-
          align
 
 % Write an integer to the output file.

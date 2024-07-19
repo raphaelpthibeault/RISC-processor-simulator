@@ -1,4 +1,4 @@
-% MOON simulator: test of recursion
+% psim: test of recursion
 
       entry
       addi   r14,r0,topaddr  % Set stack pointer

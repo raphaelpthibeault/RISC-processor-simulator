@@ -1,7 +1,3 @@
-% A Simple MOON Library
-% Author: Peter Grogono
-% Last modified: 27 Jan 1995
-
 % Conventions
 %   r14 is the Stack Pointer
 %   -4(r14) is used to store the link, if necessary.

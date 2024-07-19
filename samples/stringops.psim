@@ -1,4 +1,4 @@
-% String tests for MOON
+% String tests for psim
 
        entry
        addi    r14,r0,topaddr
